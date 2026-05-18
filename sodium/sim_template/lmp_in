@@ -1,0 +1,39 @@
+# LAMMPS Input Script for Sodium bcc Crystal at 80 °C (353 K)
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+read_data	melt.data
+# ----------------- Initialization -----------------
+mass            1 22.99    # Na atomic mass
+
+# ----------------- Potential -----------------
+pair_style      eam/fs
+pair_coeff      * * ../../../Na1.eam.fs Na
+
+neighbor        2.0 bin
+neigh_modify    delay 10
+
+# ----------------- Settings -----------------
+velocity        all create 350 12345 mom yes rot yes dist gaussian
+
+# ----------------- Production (NPT) -----------------
+reset_timestep	0
+fix		pl all plumed plumedfile plumed.dat
+fix             2 all npt temp 350 350 0.1 iso 1.0 1.0 10.0
+
+thermo		1000
+dump            1 all atom 500 dump.Na.lammpstrj
+dump_modify     1 scale no
+
+timestep	0.002
+run             5000000   # production run (~10 ns)
+
+unfix           2
+undump          1
+
+# ----------------- End -----------------
+write_data      Na_bcc_350K.data
+
