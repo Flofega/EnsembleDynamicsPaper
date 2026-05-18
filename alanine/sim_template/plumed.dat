@@ -1,0 +1,27 @@
+# vim:ft=plumed
+UNITS LENGTH=nm TIME=ps ENERGY=kj/mol
+
+LOAD FILE=../../../../../plumed_so_gpu/OPESmetad.so
+LOAD FILE=../../../../../plumed_so_gpu/WalkerAggregator.so
+LOAD FILE=../../../../../plumed_so_gpu/pytorch_model_bias.so
+LOAD FILE=../../../../../plumed_so_gpu/MM_Energy.so
+
+phi: TORSION ATOMS=5,7,9,15
+psi: TORSION ATOMS=7,9,15,17
+theta: TORSION ATOMS=6,5,7,9
+
+# Approximate protein energy
+prot: GROUP ATOMS=1-22
+heavy: GROUP ATOMS=2,5,6,7,9,11,15,16,17,19
+E: MM_ENERGY GROUP=prot FORCE_ATOMS=heavy BONDS_FILE=../bonds_mm.dat ANGLES_FILE=../angles_mm.dat DIHEDRALS_FILE=../dihedrals_mm.dat NONBONDED_LJ LJ_CUTOFF=1.2 LJ_PERATOM_FILE=../lj_peratom_mm.dat LJ_COMB=LB NONBONDED_COULOMB CHARGES_FILE=../charges_mm.dat EPSILON_R=1 EXCLUDE_12 EXCLUDE_13 SCALE_14=0
+
+agg: WALKER_AGGREGATOR ARG=E METHOD=COLLECT WAIT_ALL WALKERS_N=20 WALKERS_MPI WALKERS_ID=@replicas:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19}
+
+z: PYTORCH_MODEL_BIAS FILE=../../../../modelslr/model_2_trivial.pt  ARG=agg.w0,agg.w1,agg.w2,agg.w3,agg.w4,agg.w5,agg.w6,agg.w7,agg.w8,agg.w9,agg.w10,agg.w11,agg.w12,agg.w13,agg.w14,agg.w15,agg.w16,agg.w17,agg.w18,agg.w19 LAMBDA=8.02 EPSILON=1e-7
+
+bias: CUSTOM ARG=z.bias-0 var=a PERIODIC=NO FUNC=-a-0.0033
+potential: BIASVALUE ARG=bias
+
+opes: OPES_METAD_EXPLORE ARG=z.node-0 PACE=500 BARRIER=40 FILE=Kernels.data STATE_RFILE=compressed.Kernels STATE_WFILE=compressed.Kernels WALKERS_MPI AGGREGATED 
+
+PRINT ARG=E,phi,psi,theta,z.node-0,bias  STRIDE=500 FILE=COLVAR
