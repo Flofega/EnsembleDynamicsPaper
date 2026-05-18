@@ -1,10 +1,10 @@
 # vim:ft=plumed
 UNITS LENGTH=nm TIME=ps ENERGY=kj/mol
 
-LOAD FILE=../../../../../plumed_so_gpu/OPESmetad.so
-LOAD FILE=../../../../../plumed_so_gpu/WalkerAggregator.so
-LOAD FILE=../../../../../plumed_so_gpu/pytorch_model_bias.so
-LOAD FILE=../../../../../plumed_so_gpu/MM_Energy.so
+LOAD FILE=../../plumed_so/OPESmetad.so
+LOAD FILE=../../plumed_so/WalkerAggregator.so
+LOAD FILE=../../plumed_so/pytorch_model_bias.so
+LOAD FILE=../../plumed_so/MM_Energy.so
 
 
 dASPGLY: DISTANCE ATOMS=45,106
