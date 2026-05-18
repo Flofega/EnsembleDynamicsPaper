@@ -1,0 +1,27 @@
+# vim:ft=plumed
+UNITS NATURAL
+
+LOAD FILE=../../plumed_so/OPESmetad.so
+LOAD FILE=../../plumed_so/WalkerAggregator.so
+LOAD FILE=../../plumed_so/pytorch_model_bias.so
+#t1: TIME
+
+
+p: POSITION ATOM=1 NOPBC
+ene: CUSTOM ARG=p.x PERIODIC=NO FUNC=160*x^4-80*x^2+1.1221*x+10.563
+
+# Collect energy from 100 walkers as separate components and feed them to a model.
+agg: WALKER_AGGREGATOR ARG=ene METHOD=COLLECT WAIT_ALL WALKERS_RSTRIDE=500 WALKERS_N=32 WALKERS_MPI WALKERS_ID=@replicas:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}
+
+pot: BIASVALUE ARG=ene
+
+z: PYTORCH_MODEL_BIAS FILE=../../models/model_0_trivial.pt ARG=agg.w0,agg.w1,agg.w2,agg.w3,agg.w4,agg.w5,agg.w6,agg.w7,agg.w8,agg.w9,agg.w10,agg.w11,agg.w12,agg.w13,agg.w14,agg.w15,agg.w16,agg.w17,agg.w18,agg.w19,agg.w20,agg.w21,agg.w22,agg.w23,agg.w24,agg.w25,agg.w26,agg.w27,agg.w28,agg.w29,agg.w30,agg.w31 LAMBDA=0.6 EPSILON=1e-7
+
+bias: CUSTOM ARG=z.bias-0 var=a PERIODIC=NO FUNC=-a-13.5530
+potential: BIASVALUE ARG=bias
+
+opes: OPES_METAD_EXPLORE ARG=z.node-0 PACE=1000 Barrier=20 FILE=Kernels.data WALKERS_MPI AGGREGATED
+
+PRINT STRIDE=500 ARG=p.x,ene,bias,z.node-0,opes.* FILE=COLVAR FMT=%g
+
+ENDPLUMED
