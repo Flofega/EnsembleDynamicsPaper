@@ -1,5 +1,6 @@
 # EnsemblePaper
-Files accompanying the publication: 
+Files accompanying the publication: "A Principled Approach to Enhanced Sampling" https://doi.org/10.26434/chemrxiv.15005686/v1
+
 
 # Contents
 
