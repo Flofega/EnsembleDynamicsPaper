@@ -1,0 +1,22 @@
+# Compute local two-body entropy estimate from lammpstrj file
+
+units           metal
+atom_style      atomic
+
+read_data 	melt.data
+pair_style	eam/fs
+pair_coeff      * * ../../../Na1.eam.fs Na
+neighbor        12.4 bin
+neigh_modify    every 1 delay 0 check yes
+
+# Define compute for local entropy per atom
+compute         ent all entropy/atom 0.2 7.3 avg yes 5.1 
+# --- Syntax: compute ID group entropy/atom rc dr nbins
+#     rc: cutoff radius
+#     dr: RDF bin size
+#     nbins: number of bins
+
+# Dump atom properties including entropy
+dump            1 all custom 1 just_entropy.lammpstrj id type c_ent
+dump_modify	1 sort id
+rerun 		dump.Na.lammpstrj dump x y z box yes
